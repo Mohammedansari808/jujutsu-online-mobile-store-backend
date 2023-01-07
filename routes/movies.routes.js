@@ -1,10 +1,7 @@
 import express from 'express'
 const router = express.Router()
 import { client } from "../index.js";
-import { cors } from "cors"
 
-
-app.use(cors())
 router.post("/insertproducts", express.json(), async function (request, response) {
     const data = request.body
     const insertProducts = await client.db("supermarket").collection("products").insertMany(data)

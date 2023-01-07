@@ -5,7 +5,7 @@ dotenv.config()
 const app = express();
 import { MongoClient } from 'mongodb';
 import { ObjectId } from 'bson';
-import { cors } from "cors"
+import cors from "cors"
 
 
 app.use(cors())
