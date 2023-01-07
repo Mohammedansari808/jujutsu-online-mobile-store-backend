@@ -5,6 +5,10 @@ dotenv.config()
 const app = express();
 import { MongoClient } from 'mongodb';
 import { ObjectId } from 'bson';
+import { cors } from "cors"
+
+
+app.use(cors())
 const PORT = process.env.PORT;
 
 const Mongo_URL = process.env.Mongo_URL;
