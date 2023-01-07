@@ -13,6 +13,10 @@ await client.connect()
 console.log("Mongo is connected")
 
 app.use("/products", productsRouter)
+app.get("/", async function (request, response) {
+    const products = await client.db("supermarket").collection("products").find({}).toArray()
+    response.send(products);
+});
 // app.get("/", async function (request, response) {
 //     const products = await client.db("supermarket").collection("products").find({}).toArray()
 //     response.send(products);
