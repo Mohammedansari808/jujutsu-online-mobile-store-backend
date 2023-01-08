@@ -3,11 +3,7 @@ import express from 'express'
 
 const router = express.Router()
 import { client } from "../index.js";
-router.get("/", async function (request, response) {
-    const products = await client.db("supermarket").collection("products").find({}).toArray()
-    response.send(products);
 
-});
 
 router.post("/insertproducts", express.json(), async function (request, response) {
     const data = request.body

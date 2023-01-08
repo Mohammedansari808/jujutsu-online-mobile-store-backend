@@ -1,6 +1,6 @@
 import express from 'express'
 import * as dotenv from 'dotenv'
-import productsRouter from "./routes/movies.routes.js"
+import productsRouter from "./routes/mobiles.routes.js"
 dotenv.config()
 const app = express();
 import { MongoClient } from 'mongodb';
