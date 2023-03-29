@@ -2,12 +2,11 @@ import express from 'express'
 import * as dotenv from 'dotenv'
 import productsRouter from "./routes/mobiles.routes.js"
 import credentialsRouter from "./routes/credentials.routes.js"
+import ordersRouter from "./routes/orders.routes.js"
+import { MongoClient } from 'mongodb';
+import cors from "cors"
 dotenv.config()
 const app = express();
-import { MongoClient } from 'mongodb';
-import { ObjectId } from 'bson';
-import cors from "cors"
-
 const PORT = process.env.PORT;
 app.use(express.json())
 const Mongo_URL = process.env.Mongo_URL;
@@ -18,6 +17,7 @@ app.use(cors())
 app.use(express.static("public"));
 app.use("/products", productsRouter)
 app.use("/", credentialsRouter)
+app.use("/", ordersRouter)
 
 
 app.get("/", async function (request, response) {
