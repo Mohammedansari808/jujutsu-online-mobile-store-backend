@@ -9,7 +9,7 @@ dotenv.config()
 const app = express();
 const PORT = process.env.PORT;
 app.use(express.json())
-const Mongo_URL = process.env.Mongo_URL;
+const Mongo_URL = process.env.MONGO_URL;
 const client = new MongoClient(Mongo_URL)
 await client.connect()
 console.log("Mongo is connected")
