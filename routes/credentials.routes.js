@@ -12,7 +12,7 @@ import { otauth } from '../middleware/otauth.js';
 import { ObjectId } from 'mongodb';
 
 
-const stripe = stripes("sk_test_51MV6exSC4rEaEZLNNhcFjKy62rpxC9809oj3koUk0YeStYGG84HjEuK5SHbvtlHkrT5beRsvUvOkfBMVWIaOZJEh001qCMgZSZ");
+const stripe = stripes(process.env.STR_KEY);
 
 
 const calculateOrderAmount = (items) => {
