@@ -106,7 +106,7 @@ router.post("/signup", async function (request, response) {
             password: Hashedpassword,
             role_id: 0,
             email: email,
-            verify_link: `http://localhost:3000/verify_link/${username}/${tempLink}`
+            verify_link: `https://jujutsu-online-mobile-store-0nh8.onrender.com/verify_link/${username}/${tempLink}`
         }
         const insertData = await client.db("jujutsustore").collection("signupusers").insertOne(finalData)
         if (insertData) {
@@ -162,7 +162,7 @@ router.post("/signup", async function (request, response) {
 
 router.get("/verify_link/:username/:id", async function (request, response) {
     const { username, id } = request.params
-    const link = `http://localhost:3000/verify_link/${username}/${id}`
+    const link = `https://jujutsu-online-mobile-store-0nh8.onrender.com/verify_link/${username}/${id}`
     const isCheck = await client.db("jujutsustore").collection("signupusers").findOne({ verify_link: link })
 
     if (isCheck) {
@@ -233,7 +233,7 @@ router.post("/forgetpassword", async function (request, response) {
             otp: otp,
             email: email,
             username: username,
-            tempLink: `https://lovely-alfajores-3b1c69.netlify.router/verification-link/${username}/${tempLink}`,
+            tempLink: `https://jujutsu-online-mobile-store-0nh8.onrender.com/verification-link/${username}/${tempLink}`,
         }
         const checkData = await client.db("jujutsustore").collection("otp").findOne({ username: username })
 
