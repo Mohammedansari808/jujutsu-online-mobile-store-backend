@@ -23,7 +23,7 @@ router.post("/addproducts", auth, express.json(), async function (request, respo
     const insertProducts = await insertProduct(data)
 
 
-    response.send(insertProducts);
+    response.send({ message: "upload success", insertProducts });
 });
 
 router.put("/updateproducts/:id", express.json(), auth, async function (request, response) {
