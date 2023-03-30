@@ -2,19 +2,19 @@
 import express from 'express'
 import { auth } from "../middleware/auth.js"
 const router = express.Router()
-import { client } from "../index.js";
 import { otauth } from '../middleware/otauth.js';
 import { ObjectId } from 'mongodb';
+import { datasCheck, addingOrders, dataForMyOrders, getAllOrders, updatingDeliveryStatus } from '../services/orders.service.js';
 
 
 
 
 
-
+//adding order to my order after payment success
 router.post("/orders/:id", otauth, async function (request, response) {
     const { id } = request.params
     const data = request.body
-    const datas = await client.db("jujutsustore").collection("login").findOne({ username: id })
+    const datas = await datasCheck(id)
     let num = datas.OrderData.length + 1
 
     const finaldata = {
@@ -29,7 +29,7 @@ router.post("/orders/:id", otauth, async function (request, response) {
         console.log("error in fetching product")
     } else {
 
-        const datas = await client.db("jujutsustore").collection("login").updateOne({ username: id }, { $push: { OrderData: finaldata } })
+        const datas = await addingOrders(id, finaldata)
         if (datas) {
             response.send({ message: "updated" })
         } else {
@@ -39,27 +39,31 @@ router.post("/orders/:id", otauth, async function (request, response) {
 
 })
 
+
+//to show in my orders page
 router.get("/orderdata/:id", auth, async function (req, res) {
     const { id } = req.params
-    const data = await client.db("jujutsustore").collection("login").findOne({ username: id }, { OrderData: 1 })
+    const data = await dataForMyOrders(id)
 
     if (data) {
         res.send({ "data": data.OrderData })
     }
 })
 
+
+//to show in pending orders
 router.get("/allorders", auth, async function (req, res) {
-    const data = await client.db("jujutsustore").collection("login").find({}).project({ OrderData: 1, username: 1, email: 1 }).toArray()
+    const data = await getAllOrders()
     res.send({ "data": data })
 
 })
 
+
+//to change delivery status in orders
 router.post("/changestatus", auth, async function (req, res) {
     const data = req.body
 
-    const datas = await client.db("jujutsustore").collection("login").updateOne({ email: data.email, "OrderData.order_no": data.order }, {
-        $set: { "OrderData.$.delivered": !data.delivered }
-    })
+    const datas = await updatingDeliveryStatus(data)
     if (datas) {
         res.send({ message: "success" })
     } else {
@@ -69,3 +73,5 @@ router.post("/changestatus", auth, async function (req, res) {
 })
 
 export default router
+
+

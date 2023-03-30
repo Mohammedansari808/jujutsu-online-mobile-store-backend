@@ -1,14 +1,13 @@
 import express from 'express'
-import { ObjectId } from 'mongodb';
 
 
 const router = express.Router()
-import { client } from "../index.js";
 import { auth } from '../middleware/auth.js';
+import { getProducts, getProductbyID, insertProduct, updateProduct, delProduct } from '../services/mobiles.service.js';
 
 
 router.get("/", express.json(), auth, async function (request, response) {
-    const products = await client.db("jujutsustore").collection("products").find({}).toArray()
+    const products = await getProducts()
     response.send(products);
 });
 
@@ -16,12 +15,12 @@ router.get("/", express.json(), auth, async function (request, response) {
 
 router.get("/:id", auth, async function (request, response) {
     const { id } = request.params
-    const products = await client.db("jujutsustore").collection("products").findOne({ _id: ObjectId(id) })
+    const products = await getProductbyID(id)
     response.send(products);
 });
 router.post("/addproducts", auth, express.json(), async function (request, response) {
     const data = request.body
-    const insertProducts = await client.db("jujutsustore").collection("products").insertOne(data)
+    const insertProducts = await insertProduct(data)
 
 
     response.send(insertProducts);
@@ -30,7 +29,7 @@ router.post("/addproducts", auth, express.json(), async function (request, respo
 router.put("/updateproducts/:id", express.json(), auth, async function (request, response) {
     const data = request.body
     const { id } = request.params
-    const updateProducts = await client.db("jujutsustore").collection("products").updateOne({ _id: ObjectId(id) }, { $set: data })
+    const updateProducts = await updateProduct(id, data)
     if (updateProducts) {
         response.send({ message: "update success" });
 
@@ -41,7 +40,7 @@ router.put("/updateproducts/:id", express.json(), auth, async function (request,
 
 router.delete("/deleteproduct/:id", auth, async function (request, response) {
     const { id } = request.params
-    const deleteProduct = await client.db("jujutsustore").collection("products").deleteOne({ _id: ObjectId(id) })
+    const deleteProduct = await delProduct(id)
     if (deleteProduct) {
         response.send({ message: "successfully deleted" });
     } else {
@@ -50,3 +49,5 @@ router.delete("/deleteproduct/:id", auth, async function (request, response) {
 })
 
 export default router
+
+

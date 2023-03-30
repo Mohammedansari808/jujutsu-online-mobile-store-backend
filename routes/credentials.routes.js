@@ -8,19 +8,21 @@ import { v4 as uuidv4 } from 'uuid';
 const router = express.Router()
 import { client } from "../index.js";
 import jwt from "jsonwebtoken";
-import { otauth } from '../middleware/otauth.js';
 import { ObjectId } from 'mongodb';
 import * as dotenv from 'dotenv'
+import { signupUserCheck, signupEmailCheck, loginUserCheck, loginEmailCheck, signupInsert, verify_linkCheck, unsetVerify_link, lLoginCheck, ForgetCheck, otpCheck, updatePassword } from '../services/credentials.service.js';
 
 dotenv.config()
 
+// Payment gateway
 const stripe = stripes(process.env.STR_KEY);
-
 
 const calculateOrderAmount = (items) => {
     return items * 100
 };
 
+
+//to Customer and PaymentIntent using STRIPE
 router.post("/pay", auth, async function (request, response) {
     const data = request.body;
 
@@ -62,7 +64,7 @@ router.post("/pay", auth, async function (request, response) {
 
 })
 
-
+//generating separate token Payment
 router.get("/onetimetoken", auth, async function (request, response) {
     const token = jwt.sign({ name: "my_key", used: false }, process.env.OTTN)
     if (token) {
@@ -75,15 +77,14 @@ router.get("/onetimetoken", auth, async function (request, response) {
 
 
 
-
-
-
+// Authorization and Authentication
+//after signup user will receive a verification mail
 router.post("/signup", async function (request, response) {
     const { username, password, email } = request.body
-    const isSCheck = await client.db("jujutsustore").collection("signupusers").findOne({ username: username })
-    const isSCheckE = await client.db("jujutsustore").collection("signusers").findOne({ email: email })
-    const isCheck = await client.db("jujutsustore").collection("login").findOne({ username: username })
-    const isCheckE = await client.db("jujutsustore").collection("login").findOne({ email: email })
+    const isSCheck = await signupUserCheck(username)
+    const isSCheckE = await signupEmailCheck(email)
+    const isCheck = await loginUserCheck(username)
+    const isCheckE = await loginEmailCheck(email)
     if (!isCheck && !isCheckE && !isSCheck && !isSCheckE) {
 
         const Hashedpassword = await Hashed(password)
@@ -108,7 +109,7 @@ router.post("/signup", async function (request, response) {
             email: email,
             verify_link: `https://jujutsu-online-mobile-store-0nh8.onrender.com/verify_link/${username}/${tempLink}`
         }
-        const insertData = await client.db("jujutsustore").collection("signupusers").insertOne(finalData)
+        const insertData = await signupInsert(finalData)
         if (insertData) {
             async function main(finalData) {
                 let username = finalData.username;
@@ -160,10 +161,12 @@ router.post("/signup", async function (request, response) {
     }
 })
 
+
+//verification for signup will be verified and the link will be removed from the signup collection
 router.get("/verify_link/:username/:id", async function (request, response) {
     const { username, id } = request.params
     const link = `https://jujutsu-online-mobile-store-0nh8.onrender.com/verify_link/${username}/${id}`
-    const isCheck = await client.db("jujutsustore").collection("signupusers").findOne({ verify_link: link })
+    const isCheck = await verify_linkCheck(link)
 
     if (isCheck) {
         let checkData = {
@@ -179,10 +182,7 @@ router.get("/verify_link/:username/:id", async function (request, response) {
 
         if (insertData) {
             response.send({ message: "sign success" })
-            await client.db("jujutsustore").collection("userurls").insertOne({ username: username })
-
-            client.db("jujutsustore").collection("login").updateOne({ username: username }, { $unset: { verify_link: link } })
-            client.db("jujutsustore").collection("signupusers").updateOne({ username: username }, { $unset: { verify_link: link } })
+            await unsetVerify_link(username, link);
 
 
         }
@@ -193,10 +193,12 @@ router.get("/verify_link/:username/:id", async function (request, response) {
 
 })
 
+
+//when the login is success a token will be generated with the help of JWT.
 router.post("/login", async function (request, response) {
     const data = request.body
 
-    const loginData = await client.db("jujutsustore").collection("login").findOne({ username: data.username })
+    const loginData = await lLoginCheck(data)
     if (loginData) {
 
         async function comparPassword() {
@@ -216,10 +218,10 @@ router.post("/login", async function (request, response) {
 })
 
 
-
+//verification mail and otp will be sent to the particular user to reset password
 router.post("/forgetpassword", async function (request, response) {
     const { username, email } = request.body;
-    const data = await client.db("jujutsustore").collection("login").findOne({ username: username })
+    const data = await ForgetCheck(username)
     if (data.username == username && data.email == email) {
         let tempLink = ""
         const character = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789"
@@ -308,15 +310,16 @@ router.post("/forgetpassword", async function (request, response) {
 
 });
 
-
+//after verification is complete the otp will removed from the optdata collection
 router.post("/verification-link/:username/:id", async function (request, response) {
     const { username, id } = request.params
 
     let data = request.body
-    const otpData = await client.db("jujutsustore").collection("otp").findOne({ username: username })
+    const otpData = await otpCheck(username)
 
     if (parseInt(data.otp) == parseInt(otpData.otp)) {
         const token = jwt.sign({ _id: ObjectId(data._id) }, process.env.RESET_KEY)
+        await client.db("jujutsustore").collection("otp").deleteOne({ otp: otpData.otp })
         response.send({ message: "otp success", username: username, token: token })
     } else {
         response.send({ message: "error" })
@@ -324,6 +327,8 @@ router.post("/verification-link/:username/:id", async function (request, respons
 
 })
 
+
+//for password change
 router.put("/password-change/:username", resetauth, async function (request, response) {
     let data = request.body
     const { username } = request.params
@@ -334,7 +339,7 @@ router.put("/password-change/:username", resetauth, async function (request, res
         const HashedPassword = await bcrypt.hash(password, salt)
         return HashedPassword
     }
-    let checkuser = await client.db("jujutsustore").collection("login").updateOne({ username: username }, { $set: { password: Hashedpassword } })
+    let checkuser = await updatePassword(username, Hashedpassword)
     if (checkuser) {
         response.send({ message: "success" })
     } else if (response.status === 404) {
@@ -345,3 +350,5 @@ router.put("/password-change/:username", resetauth, async function (request, res
 })
 
 export default router
+
+
